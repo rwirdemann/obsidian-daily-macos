@@ -17,6 +17,34 @@ A macOS menu-bar app for managing Obsidian daily note todos. Built with a Go CLI
 - **Open in Obsidian** button
 - **File watch** for live updates when editing in Obsidian
 
+## Installation
+
+Download the latest `.dmg` from
+[Releases](https://github.com/rwirdemann/obsidian-daily-macos/releases)
+(Apple Silicon only), open it and drag `ObsidianDaily.app` into
+`Applications`.
+
+The app is not notarized, so macOS blocks the first launch with
+"Apple could not verify ObsidianDaily is free of malware". To allow it
+once, either:
+
+- open **System Settings → Privacy & Security**, scroll down and click
+  **Open Anyway** next to the ObsidianDaily message, or
+- remove the quarantine flag:
+
+  ```sh
+  xattr -dr com.apple.quarantine /Applications/ObsidianDaily.app
+  ```
+
+Apps started from Finder don't see shell environment variables, so set
+the vault path for GUI apps as well:
+
+```sh
+launchctl setenv OBSIDIAN_VAULT_ROOT "/path/to/your/vault"
+```
+
+This lasts until the next reboot.
+
 ## Requirements
 
 - macOS 14 (Sonoma) or later
@@ -43,9 +71,14 @@ make app-run
 
 # Build a standalone .app bundle
 make app-bundle
+
+# Build a .dmg for distribution
+make dmg
 ```
 
-The `app-bundle` target produces `ObsidianDaily.app` with the Go binary embedded in `Contents/Resources`.
+The `app-bundle` target produces an ad-hoc signed `ObsidianDaily.app`
+with the Go binary embedded in `Contents/Resources`. `make dmg` packs
+it into `dist/ObsidianDaily-<version>-arm64.dmg`.
 
 ## CLI Commands
 

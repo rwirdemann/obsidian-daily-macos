@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem.button {
             button.image = NSImage(
-                systemSymbolName: "checkmark.circle",
+                systemSymbolName: "checklist",
                 accessibilityDescription: "Obsidian Daily"
             )
             button.title = ""
