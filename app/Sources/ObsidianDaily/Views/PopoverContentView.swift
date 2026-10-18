@@ -14,7 +14,9 @@ struct PopoverContentView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
 
-            if viewModel.showingInbox {
+            if viewModel.needsVault {
+                VaultSetupView(viewModel: viewModel)
+            } else if viewModel.showingInbox {
                 inboxContent
             } else {
                 dailyContent

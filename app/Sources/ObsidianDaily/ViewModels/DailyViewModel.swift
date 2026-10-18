@@ -14,10 +14,13 @@ final class DailyViewModel {
     var newInboxText: String = ""
     var errorMessage: String?
     var showingInbox: Bool = false
+    var vaultPath: String? = VaultSettings.path
 
     var onMenuBarUpdate: ((String) -> Void)?
 
-    private let cli = CLIService()
+    private let cli = CLIService(
+        vaultPath: VaultSettings.path
+    )
     private var watchTask: Task<Void, Never>?
 
     // MARK: - Computed
@@ -63,6 +66,10 @@ final class DailyViewModel {
         return " \(done)/\(total)"
     }
 
+    var needsVault: Bool {
+        vaultPath == nil
+    }
+
     var isToday: Bool {
         Calendar.current.isDateInToday(selectedDate)
     }
@@ -101,12 +108,31 @@ final class DailyViewModel {
     }
 
     func refresh() {
+        guard !needsVault else { return }
         Task {
             await loadStatus()
             await loadWeek()
             await loadInbox()
             updateMenuBar()
             updateWatch()
+        }
+    }
+
+    func chooseVault() {
+        guard let path = VaultSettings.choose() else {
+            return
+        }
+        guard VaultSettings.isVault(path) else {
+            errorMessage = "Not an Obsidian vault: \(path)"
+            return
+        }
+        VaultSettings.save(path)
+        vaultPath = path
+        errorMessage = nil
+        stopWatching()
+        Task {
+            await cli.setVault(path)
+            refresh()
         }
     }
 

@@ -36,14 +36,8 @@ once, either:
   xattr -dr com.apple.quarantine /Applications/ObsidianDaily.app
   ```
 
-Apps started from Finder don't see shell environment variables, so set
-the vault path for GUI apps as well:
-
-```sh
-launchctl setenv OBSIDIAN_VAULT_ROOT "/path/to/your/vault"
-```
-
-This lasts until the next reboot.
+On first launch the app asks for your vault folder and remembers it.
+Use the folder button in the header to switch to another vault.
 
 ## Requirements
 
@@ -54,7 +48,9 @@ This lasts until the next reboot.
 
 ## Setup
 
-Set the vault path as an environment variable:
+When no vault has been chosen in the app, it falls back to the
+`OBSIDIAN_VAULT_ROOT` environment variable (used by `make app-run` and
+the CLI):
 
 ```sh
 export OBSIDIAN_VAULT_ROOT="/path/to/your/vault"

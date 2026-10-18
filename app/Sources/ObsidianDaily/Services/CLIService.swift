@@ -19,10 +19,10 @@ actor CLIService {
     }
 
     private let binaryPath: String
-    private let vaultPath: String?
+    private var vaultPath: String?
     private var watchProcess: Process?
 
-    init() {
+    init(vaultPath: String?) {
         let fm = FileManager.default
         let name = "obsidian-daily-macos"
 
@@ -54,8 +54,11 @@ actor CLIService {
             }
         }
 
-        vaultPath = ProcessInfo.processInfo
-            .environment["OBSIDIAN_VAULT_ROOT"]
+        self.vaultPath = vaultPath
+    }
+
+    func setVault(_ path: String) {
+        vaultPath = path
     }
 
     private func run(

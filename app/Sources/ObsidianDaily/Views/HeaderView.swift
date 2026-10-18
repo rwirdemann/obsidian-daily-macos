@@ -38,6 +38,16 @@ struct HeaderView: View {
             .foregroundStyle(Theme.textSecondary)
 
             Button {
+                viewModel.chooseVault()
+            } label: {
+                Image(systemName: "folder")
+                    .font(.system(size: 12))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.textSecondary)
+            .help("Change vault")
+
+            Button {
                 viewModel.openInObsidian()
             } label: {
                 Image(

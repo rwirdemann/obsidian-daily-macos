@@ -38,6 +38,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewModel.onMenuBarUpdate = { [weak self] title in
             self?.statusItem.button?.title = title
         }
+
+        if viewModel.needsVault {
+            DispatchQueue.main.async { [weak self] in
+                self?.viewModel.chooseVault()
+            }
+        }
     }
 
     @objc private func togglePopover() {
