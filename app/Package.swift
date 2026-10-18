@@ -9,7 +9,7 @@ let package = Package(
         .executableTarget(
             name: "ObsidianDaily",
             path: "Sources/ObsidianDaily",
-            exclude: ["Resources/Info.plist"]
+            exclude: ["Resources/Info.plist", "Resources/AppIcon.icns"]
         ),
     ]
 )

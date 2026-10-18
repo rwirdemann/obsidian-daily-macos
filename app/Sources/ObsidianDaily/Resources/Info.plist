@@ -5,6 +5,10 @@
 <dict>
     <key>LSUIElement</key>
     <true/>
+    <key>CFBundleExecutable</key>
+    <string>ObsidianDaily</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleName</key>
     <string>ObsidianDaily</string>
     <key>CFBundleIdentifier</key>
