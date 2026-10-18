@@ -125,3 +125,11 @@ All commands output JSON to stdout.
 │       └── Resources/               # Info.plist
 └── Makefile
 ```
+
+## Credits
+
+Based on [obsidian-daily-qs](https://lucanerlich.com/projects/obsidian-daily-qs/).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
