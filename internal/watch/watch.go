@@ -16,13 +16,18 @@ import (
 const pollInterval = time.Second
 
 // Watch streams snapshots: one immediately, then whenever
-// path/mtime/content changes.
+// path/mtime/content changes. It returns once the parent
+// process exits, so no orphaned watcher outlives the app.
 func Watch(
 	cliVault, cliArchive, heading string,
 ) {
 	var lastKey string
 	first := true
+	parent := os.Getppid()
 	for {
+		if os.Getppid() != parent {
+			return
+		}
 		snap := CurrentSnapshot(
 			cliVault, cliArchive, heading,
 		)
