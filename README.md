@@ -68,6 +68,9 @@ make app-run
 # Build a standalone .app bundle
 make app-bundle
 
+# Build the bundle and install it into /Applications
+make install
+
 # Build a .dmg for distribution
 make dmg
 ```

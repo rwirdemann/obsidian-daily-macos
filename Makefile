@@ -1,4 +1,4 @@
-.PHONY: build clean test app-build app-bundle app-run dmg icon
+.PHONY: build clean test app-build app-bundle app-run dmg icon install
 
 BINARY := obsidian-daily-macos
 VERSION := $(shell plutil -extract CFBundleShortVersionString raw \
@@ -29,6 +29,13 @@ app-bundle: build app-build
 	cp $(ICNS) ObsidianDaily.app/Contents/Resources/
 	codesign --force --sign - ObsidianDaily.app/Contents/Resources/$(BINARY)
 	codesign --force --sign - ObsidianDaily.app
+
+install: app-bundle
+	pkill -x ObsidianDaily || true
+	while pgrep -x ObsidianDaily >/dev/null; do sleep 0.1; done
+	rm -rf /Applications/ObsidianDaily.app
+	ditto ObsidianDaily.app /Applications/ObsidianDaily.app
+	open /Applications/ObsidianDaily.app
 
 dmg: app-bundle
 	rm -rf dist/dmg $(DMG)
