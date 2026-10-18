@@ -2,6 +2,8 @@
 
 A macOS menu-bar app for managing Obsidian daily note todos. Built with a Go CLI backend and a SwiftUI frontend.
 
+![Screenshot](screenshot.png)
+
 ## Features
 
 - **Menu-bar popover** with todos from today's daily note
