@@ -7,7 +7,7 @@ struct TodoItem: Codable, Sendable, Identifiable {
     let depth: Int
     let parentLine: Int?
 
-    var id: Int { line }
+    var id: String { "\(line):\(text)" }
 }
 
 struct Snapshot: Codable, Sendable {

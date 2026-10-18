@@ -163,6 +163,7 @@ final class DailyViewModel {
                     text: text, date: dateString
                 )
                 snapshot = snap
+                await loadWeek()
                 updateMenuBar()
             } catch {
                 errorMessage = error.localizedDescription
