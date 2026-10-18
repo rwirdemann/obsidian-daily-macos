@@ -94,7 +94,8 @@ func main() {
 		toggleCmd(), editCmd(), deleteCmd(),
 		deferCmd(), indentCmd(), outdentCmd(),
 		undoCmd(), weekCmd(), carryOverCmd(),
-		openCmd(),
+		openCmd(), inboxCmd(), inboxAddCmd(),
+		inboxDeleteCmd(), inboxMoveCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -773,6 +774,183 @@ func openCmd() *cobra.Command {
 			)
 		},
 	}
-	cmd.Flags().StringVar(&dateStr, "date", "", "Target date")
+	cmd.Flags().StringVar(
+		&dateStr, "date", "", "Target date",
+	)
+	return cmd
+}
+
+func inboxCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "inbox",
+		Short: "Print Inbox.md todos as JSON",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vaultArg, archiveArg, err := resolveArgs(
+				false,
+			)
+			if err != nil {
+				errorSnap(err.Error())
+				return
+			}
+			vault, verr := config.Resolve(
+				vaultArg, archiveArg,
+			)
+			if verr != nil {
+				snap := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&snap)
+				return
+			}
+			snap, verr := todo.ReadInbox(vault)
+			if verr != nil {
+				s := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&s)
+				return
+			}
+			emitSnapshot(snap)
+		},
+	}
+}
+
+func inboxAddCmd() *cobra.Command {
+	var text string
+	cmd := &cobra.Command{
+		Use:   "inbox-add",
+		Short: "Add a todo to Inbox.md",
+		Run: func(cmd *cobra.Command, args []string) {
+			fields, vaultArg, archiveArg, err :=
+				resolveArgs(false)
+			if err != nil {
+				errorSnap(err.Error())
+				return
+			}
+			resolvedText, e := resolveText(
+				text, fields,
+			)
+			if e != nil {
+				errorSnap(e.Error())
+				return
+			}
+			vault, verr := config.Resolve(
+				vaultArg, archiveArg,
+			)
+			if verr != nil {
+				snap := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&snap)
+				return
+			}
+			snap, verr := todo.AddInboxTodo(
+				vault, resolvedText,
+			)
+			if verr != nil {
+				s := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&s)
+				return
+			}
+			emitSnapshot(snap)
+		},
+	}
+	cmd.Flags().StringVar(
+		&text, "text", "", "Todo text",
+	)
+	return cmd
+}
+
+func inboxDeleteCmd() *cobra.Command {
+	var line int
+	var expectText string
+	cmd := &cobra.Command{
+		Use:   "inbox-delete",
+		Short: "Delete a todo from Inbox.md",
+		Run: func(cmd *cobra.Command, args []string) {
+			fields, vaultArg, archiveArg, err :=
+				resolveArgs(false)
+			if err != nil {
+				errorSnap(err.Error())
+				return
+			}
+			et := resolveExpectText(expectText, fields)
+			vault, verr := config.Resolve(
+				vaultArg, archiveArg,
+			)
+			if verr != nil {
+				snap := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&snap)
+				return
+			}
+			snap, verr := todo.DeleteInboxTodo(
+				vault, line, et,
+			)
+			if verr != nil {
+				s := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&s)
+				return
+			}
+			emitSnapshot(snap)
+		},
+	}
+	cmd.Flags().IntVar(
+		&line, "line", 0,
+		"1-based line in Inbox.md",
+	)
+	cmd.MarkFlagRequired("line")
+	cmd.Flags().StringVar(
+		&expectText, "expect-text", "",
+		"Expected text for stale-view check",
+	)
+	return cmd
+}
+
+func inboxMoveCmd() *cobra.Command {
+	var line int
+	var expectText, dateStr, heading string
+	cmd := &cobra.Command{
+		Use:   "inbox-move",
+		Short: "Move an inbox todo into a daily note",
+		Run: func(cmd *cobra.Command, args []string) {
+			fields, vaultArg, archiveArg, err :=
+				resolveArgs(false)
+			if err != nil {
+				errorSnap(err.Error())
+				return
+			}
+			et := resolveExpectText(expectText, fields)
+			run(vaultArg, archiveArg, dateStr,
+				func(
+					v *config.Vault, d time.Time,
+				) (*status.Snapshot, *config.VaultError) {
+					return todo.MoveInboxTodo(
+						v, line, et, d, heading,
+					)
+				},
+			)
+		},
+	}
+	cmd.Flags().IntVar(
+		&line, "line", 0, "1-based line in Inbox.md",
+	)
+	cmd.MarkFlagRequired("line")
+	cmd.Flags().StringVar(
+		&expectText, "expect-text", "",
+		"Expected text for stale-view check",
+	)
+	cmd.Flags().StringVar(
+		&dateStr, "date", "", "Target date",
+	)
+	cmd.Flags().StringVar(
+		&heading, "heading", "",
+		"Insert under heading in daily note",
+	)
 	return cmd
 }

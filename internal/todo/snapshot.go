@@ -87,6 +87,12 @@ func enrichSnapshot(
 	}
 	snap.CarryOverCount = &count
 
+	ibCount, err := InboxCount(vault)
+	if err != nil {
+		return err
+	}
+	snap.InboxCount = &ibCount
+
 	if cfg.Template != "" {
 		name := cfg.Template
 		snap.TemplateName = &name

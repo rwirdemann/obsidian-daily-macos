@@ -35,6 +35,7 @@ type Snapshot struct {
 	IsToday             *bool       `json:"isToday,omitempty"`
 	TemplateName        *string     `json:"templateName,omitempty"`
 	CreatedFromTemplate *bool       `json:"createdFromTemplate,omitempty"`
+	InboxCount          *int        `json:"inboxCount,omitempty"`
 	ErrorCode           *string     `json:"errorCode,omitempty"`
 	Error               *string     `json:"error,omitempty"`
 }
