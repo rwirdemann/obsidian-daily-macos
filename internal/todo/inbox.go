@@ -210,6 +210,54 @@ func DeleteInboxTodo(
 	return ReadInbox(vault)
 }
 
+// ToggleInboxTodo toggles the checkbox on a 1-based line
+// in Inbox.md.
+func ToggleInboxTodo(
+	vault *config.Vault,
+	line int,
+	expectText string,
+) (*status.Snapshot, *config.VaultError) {
+	if line == 0 {
+		return nil, config.NewVaultError(
+			"io", "line must be >= 1",
+		)
+	}
+
+	path := inboxPath(vault)
+	if !fileExists(path) {
+		return nil, config.NewVaultError(
+			"io", "Inbox.md does not exist",
+		)
+	}
+
+	data, e := os.ReadFile(path)
+	if e != nil {
+		return nil, config.NewVaultError(
+			"io",
+			fmt.Sprintf(
+				"failed to read %s: %v", path, e,
+			),
+		)
+	}
+	content := string(data)
+
+	if err := expectLineText(
+		content, line, expectText,
+	); err != nil {
+		return nil, err
+	}
+	next, err := toggleLine(content, line)
+	if err != nil {
+		return nil, err
+	}
+	if err := writeAtomicWithUndo(
+		vault, time.Now(), path, content, next,
+	); err != nil {
+		return nil, err
+	}
+	return ReadInbox(vault)
+}
+
 // MoveInboxTodo moves a single todo from Inbox.md into
 // the daily note for the given date.
 func MoveInboxTodo(

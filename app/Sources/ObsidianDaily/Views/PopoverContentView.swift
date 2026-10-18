@@ -67,9 +67,7 @@ struct PopoverContentView: View {
     private var inboxContent: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(
-                    "\(viewModel.inboxOpenCount) open"
-                )
+                Text(viewModel.inboxStatusText)
                 .font(Theme.captionFont)
                 .foregroundStyle(Theme.textSecondary)
 

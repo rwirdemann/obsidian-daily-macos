@@ -19,8 +19,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 systemSymbolName: "checklist",
                 accessibilityDescription: "Obsidian Daily"
             )
-            button.title = ""
             button.imagePosition = .imageLeading
+            button.alignment = .left
+            // Fixed width for the widest expected title, so
+            // the icon and popover stay in place.
+            button.title = " 99/99"
+            statusItem.length = button.fittingSize.width
+            button.title = ""
             button.action = #selector(togglePopover)
             button.target = self
         }

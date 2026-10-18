@@ -96,6 +96,7 @@ func main() {
 		undoCmd(), weekCmd(), carryOverCmd(),
 		openCmd(), inboxCmd(), inboxAddCmd(),
 		inboxDeleteCmd(), inboxMoveCmd(),
+		inboxToggleCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -329,7 +330,7 @@ func statusCmd() *cobra.Command {
 }
 
 func watchCmd() *cobra.Command {
-	var heading string
+	var dateStr, heading string
 	cmd := &cobra.Command{
 		Use:   "watch",
 		Short: "Stream status snapshots as JSON lines",
@@ -341,9 +342,24 @@ func watchCmd() *cobra.Command {
 				errorSnap(err.Error())
 				return
 			}
-			watch.Watch(vaultArg, archiveArg, heading)
+			var date *time.Time
+			if dateStr != "" {
+				d, e := parseDate(dateStr)
+				if e != nil {
+					errorSnap(e.Error())
+					return
+				}
+				date = &d
+			}
+			watch.Watch(
+				vaultArg, archiveArg, heading, date,
+			)
 		},
 	}
+	cmd.Flags().StringVar(
+		&dateStr, "date", "",
+		"Target date (default: today)",
+	)
 	cmd.Flags().StringVar(
 		&heading, "heading", "",
 		"Filter by heading",
@@ -888,6 +904,55 @@ func inboxDeleteCmd() *cobra.Command {
 				return
 			}
 			snap, verr := todo.DeleteInboxTodo(
+				vault, line, et,
+			)
+			if verr != nil {
+				s := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&s)
+				return
+			}
+			emitSnapshot(snap)
+		},
+	}
+	cmd.Flags().IntVar(
+		&line, "line", 0,
+		"1-based line in Inbox.md",
+	)
+	cmd.MarkFlagRequired("line")
+	cmd.Flags().StringVar(
+		&expectText, "expect-text", "",
+		"Expected text for stale-view check",
+	)
+	return cmd
+}
+
+func inboxToggleCmd() *cobra.Command {
+	var line int
+	var expectText string
+	cmd := &cobra.Command{
+		Use:   "inbox-toggle",
+		Short: "Toggle a todo checkbox in Inbox.md",
+		Run: func(cmd *cobra.Command, args []string) {
+			fields, vaultArg, archiveArg, err :=
+				resolveArgs(false)
+			if err != nil {
+				errorSnap(err.Error())
+				return
+			}
+			et := resolveExpectText(expectText, fields)
+			vault, verr := config.Resolve(
+				vaultArg, archiveArg,
+			)
+			if verr != nil {
+				snap := status.ErrorWithCode(
+					verr.Message, verr.Code,
+				)
+				emitSnapshot(&snap)
+				return
+			}
+			snap, verr := todo.ToggleInboxTodo(
 				vault, line, et,
 			)
 			if verr != nil {

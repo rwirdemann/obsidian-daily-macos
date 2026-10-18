@@ -7,13 +7,17 @@ final class DailyViewModel {
     var selectedDate: Date = .now
     var snapshot: Snapshot?
     var weekSummary: WeekSummary?
-    var inboxSnapshot: Snapshot?
+    var inboxSnapshot: Snapshot? {
+        didSet { updateMenuBar() }
+    }
     var searchText: String = ""
     var hideDone: Bool = false
     var newTodoText: String = ""
     var newInboxText: String = ""
     var errorMessage: String?
-    var showingInbox: Bool = false
+    var showingInbox: Bool = false {
+        didSet { updateMenuBar() }
+    }
     var vaultPath: String? = VaultSettings.path
 
     var onMenuBarUpdate: ((String) -> Void)?
@@ -22,6 +26,7 @@ final class DailyViewModel {
         vaultPath: VaultSettings.path
     )
     private var watchTask: Task<Void, Never>?
+    private var watchedDate: String?
 
     // MARK: - Computed
 
@@ -53,16 +58,28 @@ final class DailyViewModel {
     }
 
     var statusText: String {
+        Self.formatStatus(snapshot)
+    }
+
+    var inboxStatusText: String {
+        Self.formatStatus(inboxSnapshot)
+    }
+
+    private static func formatStatus(
+        _ snapshot: Snapshot?
+    ) -> String {
         let done = snapshot?.doneCount ?? 0
-        let total = done + (snapshot?.openCount ?? 0)
         let open = snapshot?.openCount ?? 0
-        return "\(done)/\(total) done · \(open) open"
+        return "\(done)/\(done + open) done · \(open) open"
     }
 
     var menuBarTitle: String {
-        let done = snapshot?.doneCount ?? 0
-        let total = done + (snapshot?.openCount ?? 0)
-        if total == 0 { return "" }
+        let current = showingInbox ? inboxSnapshot : snapshot
+        guard let snapshot = current, snapshot.isOk else {
+            return ""
+        }
+        let done = snapshot.doneCount ?? 0
+        let total = done + (snapshot.openCount ?? 0)
         return " \(done)/\(total)"
     }
 
@@ -75,10 +92,7 @@ final class DailyViewModel {
     }
 
     var inboxTodos: [TodoItem] {
-        guard let todos = inboxSnapshot?.todos else {
-            return []
-        }
-        return todos.filter { !$0.checked }
+        inboxSnapshot?.todos ?? []
     }
 
     var inboxOpenCount: Int {
@@ -105,6 +119,7 @@ final class DailyViewModel {
 
     func selectInbox() {
         showingInbox = true
+        Task { await loadInbox() }
     }
 
     func refresh() {
@@ -114,7 +129,7 @@ final class DailyViewModel {
             await loadWeek()
             await loadInbox()
             updateMenuBar()
-            updateWatch()
+            startWatching()
         }
     }
 
@@ -228,6 +243,19 @@ final class DailyViewModel {
         }
     }
 
+    func toggleInboxTodo(_ todo: TodoItem) {
+        Task {
+            do {
+                inboxSnapshot = try await cli.inboxToggle(
+                    line: todo.line,
+                    expectText: todo.text
+                )
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
     func deleteInboxTodo(_ todo: TodoItem) {
         Task {
             do {
@@ -260,11 +288,20 @@ final class DailyViewModel {
     // MARK: - Watch
 
     func startWatching() {
-        guard isToday, watchTask == nil else { return }
+        let date = dateString
+        guard watchTask == nil || watchedDate != date
+        else { return }
+        watchTask?.cancel()
+        watchedDate = date
         watchTask = Task {
-            let stream = await cli.watch()
+            let stream = await cli.watch(date: date)
             for await snap in stream {
+                guard !Task.isCancelled else { break }
                 snapshot = snap
+                if let count = snap.inboxCount,
+                   count != inboxOpenCount {
+                    await loadInbox()
+                }
                 updateMenuBar()
             }
         }
@@ -273,6 +310,7 @@ final class DailyViewModel {
     func stopWatching() {
         watchTask?.cancel()
         watchTask = nil
+        watchedDate = nil
         Task { await cli.stopWatch() }
     }
 
@@ -308,14 +346,6 @@ final class DailyViewModel {
 
     private func updateMenuBar() {
         onMenuBarUpdate?(menuBarTitle)
-    }
-
-    private func updateWatch() {
-        if isToday {
-            startWatching()
-        } else {
-            stopWatching()
-        }
     }
 
     private static let formatter: DateFormatter = {

@@ -9,6 +9,9 @@ struct InboxListView: View {
                 ForEach(viewModel.inboxTodos) { todo in
                     InboxRowView(
                         todo: todo,
+                        onToggle: {
+                            viewModel.toggleInboxTodo(todo)
+                        },
                         onMove: {
                             viewModel.moveInboxTodo(todo)
                         },
@@ -29,6 +32,7 @@ struct InboxListView: View {
 
 struct InboxRowView: View {
     let todo: TodoItem
+    let onToggle: () -> Void
     let onMove: () -> Void
     let onDelete: () -> Void
 
@@ -36,13 +40,29 @@ struct InboxRowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "tray")
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.textSecondary)
+            Button(action: onToggle) {
+                Image(
+                    systemName: todo.checked
+                        ? "checkmark.circle.fill"
+                        : "circle"
+                )
+                .font(.system(size: 14))
+                .foregroundStyle(
+                    todo.checked
+                        ? Theme.todoDone
+                        : Theme.accent
+                )
+            }
+            .buttonStyle(.plain)
 
             Text(todo.text)
                 .font(Theme.bodyFont)
-                .foregroundStyle(Theme.textPrimary)
+                .foregroundStyle(
+                    todo.checked
+                        ? Theme.todoDone
+                        : Theme.textPrimary
+                )
+                .strikethrough(todo.checked)
                 .lineLimit(2)
 
             Spacer()

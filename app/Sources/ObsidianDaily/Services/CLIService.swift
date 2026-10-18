@@ -216,6 +216,22 @@ actor CLIService {
         )
     }
 
+    func inboxToggle(
+        line: Int,
+        expectText: String? = nil
+    ) async throws -> Snapshot {
+        var args = [
+            "inbox-toggle", "--line", "\(line)",
+        ]
+        if let et = expectText {
+            args += ["--expect-text", et]
+        }
+        let data = try await run(args)
+        return try JSONDecoder().decode(
+            Snapshot.self, from: data
+        )
+    }
+
     func inboxMove(
         line: Int,
         date: String? = nil,
@@ -234,13 +250,16 @@ actor CLIService {
         )
     }
 
-    func watch() -> AsyncStream<Snapshot> {
+    func watch(
+        date: String? = nil
+    ) -> AsyncStream<Snapshot> {
         AsyncStream { continuation in
             let process = Process()
             process.executableURL = URL(
                 fileURLWithPath: binaryPath
             )
             var args = ["watch"]
+            if let d = date { args += ["--date", d] }
             if let vault = vaultPath, !vault.isEmpty {
                 args = ["--vault", vault] + args
             }

@@ -12,12 +12,15 @@ struct HeaderView: View {
             Text("Obsidian Daily")
                 .font(Theme.headerFont)
                 .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1)
 
-            Spacer()
+            Spacer(minLength: 4)
 
             Text(viewModel.displayDate)
                 .font(Theme.captionFont)
                 .foregroundStyle(Theme.textSecondary)
+                .lineLimit(1)
+                .fixedSize()
 
             Button {
                 viewModel.navigateDay(-1)

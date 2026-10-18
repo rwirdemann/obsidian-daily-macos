@@ -1,4 +1,4 @@
-// Package watch polls today's daily note and emits JSON
+// Package watch polls a daily note and emits JSON
 // snapshots when it changes.
 package watch
 
@@ -15,11 +15,13 @@ import (
 
 const pollInterval = time.Second
 
-// Watch streams snapshots: one immediately, then whenever
-// path/mtime/content changes. It returns once the parent
-// process exits, so no orphaned watcher outlives the app.
+// Watch streams snapshots for date, or for today if date
+// is nil: one immediately, then whenever path/mtime/content
+// changes. It returns once the parent process exits, so no
+// orphaned watcher outlives the app.
 func Watch(
 	cliVault, cliArchive, heading string,
+	date *time.Time,
 ) {
 	var lastKey string
 	first := true
@@ -29,7 +31,7 @@ func Watch(
 			return
 		}
 		snap := CurrentSnapshot(
-			cliVault, cliArchive, heading,
+			cliVault, cliArchive, heading, date,
 		)
 		key := snapshotKey(snap)
 		if first || key != lastKey {
@@ -43,9 +45,11 @@ func Watch(
 	}
 }
 
-// CurrentSnapshot gets the current snapshot for today.
+// CurrentSnapshot gets the current snapshot for date, or
+// for today if date is nil.
 func CurrentSnapshot(
 	cliVault, cliArchive, heading string,
+	date *time.Time,
 ) *status.Snapshot {
 	vault, err := config.Resolve(cliVault, cliArchive)
 	if err != nil {
@@ -54,9 +58,12 @@ func CurrentSnapshot(
 		)
 		return &snap
 	}
-	date := time.Now()
+	d := time.Now()
+	if date != nil {
+		d = *date
+	}
 	snap, err := todo.ReadSnapshotFiltered(
-		vault, date, heading,
+		vault, d, heading,
 	)
 	if err != nil {
 		s := status.ErrorWithCode(
