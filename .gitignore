@@ -2,3 +2,4 @@ obsidian-daily-macos
 ObsidianDaily.app/
 app/.build/
 dist/
+.DS_Store
