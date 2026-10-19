@@ -132,6 +132,17 @@ actor CLIService {
         )
     }
 
+    func carryOver(
+        date: String? = nil
+    ) async throws -> Snapshot {
+        var args = ["carry-over"]
+        if let d = date { args += ["--date", d] }
+        let data = try await run(args)
+        return try JSONDecoder().decode(
+            Snapshot.self, from: data
+        )
+    }
+
     func toggle(
         line: Int,
         date: String? = nil,

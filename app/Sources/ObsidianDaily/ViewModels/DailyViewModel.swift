@@ -83,6 +83,11 @@ final class DailyViewModel {
         return " \(done)/\(total)"
     }
 
+    var carryOverCount: Int {
+        guard isToday else { return 0 }
+        return snapshot?.carryOverCount ?? 0
+    }
+
     var needsVault: Bool {
         vaultPath == nil
     }
@@ -178,6 +183,20 @@ final class DailyViewModel {
                     text: text, date: dateString
                 )
                 snapshot = snap
+                await loadWeek()
+                updateMenuBar()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func carryOver() {
+        Task {
+            do {
+                snapshot = try await cli.carryOver(
+                    date: dateString
+                )
                 await loadWeek()
                 updateMenuBar()
             } catch {
